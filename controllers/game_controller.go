@@ -27,23 +27,40 @@ func CreateGame(w http.ResponseWriter, r *http.Request) {
         QuestionText        string   `json:"questionText"`
         Options             []string `json:"options"`
         CorrectAnswerIndex  int      `json:"correctAnswerIndex"`
+        Explanation         string   `json:"explanation"`
     }{
         {
-            QuestionText:       "What is the capital of France?",
-            Options:            []string{"London", "Berlin", "Paris", "Madrid"},
-            CorrectAnswerIndex: 2,
-        },
-        {
-            QuestionText:       "Which planet is known as the Red Planet?",
-            Options:            []string{"Mars", "Jupiter", "Venus", "Saturn"},
-            CorrectAnswerIndex: 0,
-        },
-        {
-            QuestionText:       "What is the largest mammal in the world?",
-            Options:            []string{"Elephant", "Blue Whale", "Giraffe", "Hippopotamus"},
+            QuestionText:       "What is a stock?",
+            Options:            []string{"A type of bond", "A share in the ownership of a company", "A loan given to the government", "A type of commodity"},
             CorrectAnswerIndex: 1,
+            Explanation:        "A stock represents a share in the ownership of a company. When you buy a stock, you own a part of that company and are entitled to a portion of its profits.",
+        },
+        {
+            QuestionText:       "What is a bear market?",
+            Options:            []string{"A market characterized by rising prices", "A market characterized by falling prices", "A market with no significant changes", "A market that is closed for trading"},
+            CorrectAnswerIndex: 1,
+            Explanation:        "A bear market is characterized by falling prices, typically in the context of securities or commodities markets. It indicates widespread pessimism and a negative sentiment among investors.",
+        },
+        {
+            QuestionText:       "What is the primary purpose of an Initial Public Offering (IPO)?",
+            Options:            []string{"To raise capital for the company", "To pay off company debt", "To distribute profits to shareholders", "To buy back shares from investors"},
+            CorrectAnswerIndex: 0,
+            Explanation:        "The primary purpose of an IPO is to raise capital for the company. By going public, a company can raise funds from a large pool of investors to finance its growth and operations.",
+        },
+        {
+            QuestionText:       "Which of the following is a type of derivative instrument?",
+            Options:            []string{"Stocks", "Bonds", "Options", "Real Estate"},
+            CorrectAnswerIndex: 2,
+            Explanation:        "Options are a type of derivative instrument. Derivatives are financial contracts whose value is derived from the performance of underlying assets, indices, or interest rates.",
+        },
+        {
+            QuestionText:       "What is market capitalization?",
+            Options:            []string{"The total value of a company's outstanding bonds", "The total amount of profit a company has earned", "The total value of a company's outstanding shares", "The total amount of debt a company has"},
+            CorrectAnswerIndex: 2,
+            Explanation:        "Market capitalization is the total value of a company's outstanding shares of stock. It is calculated by multiplying the current market price of one share by the total number of shares outstanding.",
         },
     }
+    
 
     retObj := struct {
         Game      models.Game `json:"game"`
@@ -51,6 +68,7 @@ func CreateGame(w http.ResponseWriter, r *http.Request) {
             QuestionText        string   `json:"questionText"`
             Options             []string `json:"options"`
             CorrectAnswerIndex  int      `json:"correctAnswerIndex"`
+            Explanation         string   `json:"explanation"`
         } `json:"questions"`
     }{
         Game: game,
