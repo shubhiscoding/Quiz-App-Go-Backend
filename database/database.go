@@ -9,16 +9,23 @@ import (
 
 var DB *sql.DB
 
+// InitDB initializes the database connection and creates the necessary tables.
 func InitDB() {
     var err error
     DB, err = sql.Open("sqlite3", "./quiz.db")
     if err != nil {
-        log.Fatal(err)
+        log.Fatalf("Failed to connect to the database: %v", err)
+    }
+
+    // Verify the connection is valid
+    if err := DB.Ping(); err != nil {
+        log.Fatalf("Failed to establish a database connection: %v", err)
     }
 
     createTables()
 }
 
+// createTables creates the necessary tables if they do not already exist.
 func createTables() {
     createUsersTable := `
     CREATE TABLE IF NOT EXISTS users (
@@ -32,31 +39,25 @@ func createTables() {
     createGamesTable := `
     CREATE TABLE IF NOT EXISTS games (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        score INTEGER,
-        gamepoint INTEGER
+        level INTEGER NOT NULL
     );`
 
     createUserGamesTable := `
     CREATE TABLE IF NOT EXISTS user_games (
         user_id INTEGER,
         game_id INTEGER,
+        point INTEGER DEFAULT 0,
+        gamepoint INTEGER DEFAULT 0,
         PRIMARY KEY (user_id, game_id),
         FOREIGN KEY (user_id) REFERENCES users (id),
         FOREIGN KEY (game_id) REFERENCES games (id)
     );`
 
-    _, err := DB.Exec(createUsersTable)
-    if err != nil {
-        log.Fatal(err)
-    }
+    tables := []string{createUsersTable, createGamesTable, createUserGamesTable}
 
-    _, err = DB.Exec(createGamesTable)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    _, err = DB.Exec(createUserGamesTable)
-    if err != nil {
-        log.Fatal(err)
+    for _, table := range tables {
+        if _, err := DB.Exec(table); err != nil {
+            log.Fatalf("Failed to create table: %v", err)
+        }
     }
 }

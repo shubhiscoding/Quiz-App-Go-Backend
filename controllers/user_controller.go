@@ -3,33 +3,38 @@ package controllers
 import (
     "encoding/json"
     "net/http"
-    "quiz-backend/database"
     "quiz-backend/models"
-    "crypto/sha256"
+    "quiz-backend/services"
     "fmt"
 )
 
+var userService = services.NewUserService()
+
 func Register(w http.ResponseWriter, r *http.Request) {
     var user models.User
-    json.NewDecoder(r.Body).Decode(&user)
+    if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+        http.Error(w, fmt.Sprintf("Register: invalid request: %v", err), http.StatusBadRequest)
+        return
+    }
 
-    hashedPassword := hashPassword(user.Password)
     if len(user.Password) < 6 {
-        http.Error(w, "Password must be at least 6 characters long", http.StatusBadRequest)
+        http.Error(w, "Register: password must be at least 6 characters long", http.StatusBadRequest)
         return
     }
-    user.Password = hashedPassword
 
-    result, err := database.DB.Exec("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", user.Name, user.Email, user.Password)
+    err := userService.RegisterUser(user.Name, user.Email, user.Password)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        if err.Error() == "user already exists" {
+            http.Error(w, "Register: user already exists", http.StatusConflict)
+            return
+        }
+        http.Error(w, fmt.Sprintf("Register: failed to register user: %v", err), http.StatusInternalServerError)
         return
     }
 
-    id, _ := result.LastInsertId()
-    user.ID = int(id)
-    user.Password = "" // Don't return the password in the response
-
+    user.Points = 0
+    user.Password = ""
+    w.WriteHeader(http.StatusCreated)
     json.NewEncoder(w).Encode(user)
 }
 
@@ -38,30 +43,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
         Email    string `json:"email"`
         Password string `json:"password"`
     }
-    json.NewDecoder(r.Body).Decode(&loginData)
 
-    var user models.User
-    err := database.DB.QueryRow("SELECT id, name, email, password, points FROM users WHERE email = ?", loginData.Email).Scan(
-        &user.ID, &user.Name, &user.Email, &user.Password, &user.Points,
-    )
+    if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
+        http.Error(w, fmt.Sprintf("Login: invalid request: %v", err), http.StatusBadRequest)
+        return
+    }
+
+    user, err := userService.AuthenticateUser(loginData.Email, loginData.Password)
     if err != nil {
-        http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+        if err.Error() == "invalid email or password" {
+            http.Error(w, "Login: invalid email or password", http.StatusUnauthorized)
+            return
+        }
+        http.Error(w, fmt.Sprintf("Login: failed to authenticate user: %v", err), http.StatusInternalServerError)
         return
     }
 
-    hashedPassword := hashPassword(loginData.Password)
-    if user.Password != hashedPassword {
-        http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-        return
-    }
-
-    user.Password = "" // Don't return the password in the response
-
+    user.Password = ""
     json.NewEncoder(w).Encode(user)
-}
-
-func hashPassword(password string) string {
-    h := sha256.New()
-    h.Write([]byte(password))
-    return fmt.Sprintf("%x", h.Sum(nil))
 }

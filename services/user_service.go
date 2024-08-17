@@ -11,11 +11,24 @@ import (
 
 type UserService struct{}
 
-func (s *UserService) RegisterUser(name, email, password string) error {
-    hashedPassword := hashPassword(password)
+func NewUserService() *UserService {
+    return &UserService{}
+}
 
-    query := `INSERT INTO users (name, email, password) VALUES (?, ?, ?)`
-    _, err := database.DB.Exec(query, name, email, hashedPassword)
+func (s *UserService) RegisterUser(name, email, password string) error {
+    var existingUser models.User
+
+    // Check if the user already exists
+    query := `SELECT id FROM users WHERE email = ?`
+    err := database.DB.QueryRow(query, email).Scan(&existingUser.ID)
+    if err != nil && err != sql.ErrNoRows {
+        return err
+    }
+    if existingUser.ID != 0 {
+        return errors.New("user already exists")
+    }
+    query = `INSERT INTO users (name, email, password) VALUES (?, ?, ?)`
+    _, err = database.DB.Exec(query, name, email, hashPassword(password))
     if err != nil {
         return err
     }
