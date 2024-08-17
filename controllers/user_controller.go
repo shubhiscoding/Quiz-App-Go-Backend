@@ -4,7 +4,6 @@ import (
     "encoding/json"
     "net/http"
     "quiz-backend/models"
-    "strconv"
     "quiz-backend/services"
     "fmt"
 )
@@ -75,19 +74,17 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserByID(w http.ResponseWriter, r *http.Request) {
-    // Extract the user ID from the URL parameters
-    idStr := r.URL.Query().Get("id")
-    if idStr == "" {
-        http.Error(w, "User ID is required", http.StatusBadRequest)
+    var payload struct {
+        ID int `json:"id"`
+    }
+
+    // Decode the JSON request body to get the user ID
+    if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+        http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
         return
     }
 
-    // Convert the ID to an integer
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        http.Error(w, "Invalid user ID", http.StatusBadRequest)
-        return
-    }
+    id := payload.ID
 
     // Fetch the user from the service
     user, err := userService.GetUserByID(id)

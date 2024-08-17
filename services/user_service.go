@@ -72,20 +72,15 @@ func (s *UserService) GetUsers() ([]models.User, error) {
     return users, nil
 }
 
-func (s *UserService) GetUserByID(id int) (*models.User, error) {
-    query := `SELECT id, name, email, points FROM users WHERE id = ?`
-    row := database.DB.QueryRow(query, id)
-
-    var user models.User
-    if err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Points); err != nil {
-        if err == sql.ErrNoRows {
-            return nil, errors.New("user not found")
-        }
-        return nil, err
-    }
-
-    return &user, nil
+func (s *UserService) GetUserByID(userID int) (models.User, error) {
+	var user models.User
+	err := database.DB.QueryRow("SELECT id, name, email, points FROM users WHERE id = ?", userID).Scan(&user.ID, &user.Name, &user.Email, &user.Points)
+	if err != nil {
+		return models.User{}, fmt.Errorf("GetUserById: failed to retrieve user: %v", err)
+	}
+	return user, nil
 }
+
 
 func hashPassword(password string) string {
     h := sha256.New()

@@ -19,7 +19,7 @@ func main() {
     r.HandleFunc("/login", controllers.Login).Methods("POST")
     r.HandleFunc("/games", controllers.CreateGame).Methods("POST")
     r.HandleFunc("/user-games", controllers.CreateUserGame).Methods("POST")
-    r.HandleFunc("/users/{id:[0-9]+}", controllers.GetUserByID).Methods("GET")
+    r.HandleFunc("/user", controllers.GetUserByID).Methods("GET")
     r.HandleFunc("/game-end", controllers.EndGame).Methods("POST")
 
     log.Fatal(http.ListenAndServe(":8080", r))
