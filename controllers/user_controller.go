@@ -104,3 +104,27 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(user)
 }
+
+
+func GetUsersGame(w http.ResponseWriter, r *http.Request) {
+    idStr := r.URL.Query().Get("id")
+    if idStr == "" {
+        http.Error(w, "User ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Convert ID to integer
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    userGames, err := userService.GetUserGames(id)
+    if err != nil {
+        http.Error(w, fmt.Sprintf("GetUsersGame: failed to get user games: %v", err), http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(userGames)
+}

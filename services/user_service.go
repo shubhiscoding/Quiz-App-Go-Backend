@@ -81,6 +81,31 @@ func (s *UserService) GetUserByID(userID int) (models.User, error) {
 	return user, nil
 }
 
+func (s *UserService) GetUserGames(userID int) ([]models.UserGame, error) {
+    var userGame []models.UserGame
+    query := `SELECT user_id, game_id, point, gamepoint FROM user_games WHERE user_id = ?`
+    rows, err := database.DB.Query(query, userID)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    
+    for rows.Next() {
+        var ug models.UserGame
+        if err := rows.Scan(&ug.UserID, &ug.GameID, &ug.Score, &ug.GamePoint); err != nil {
+            return nil, err
+        }
+        userGame = append(userGame, ug)
+    }
+    
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+    
+    return userGame, nil
+    
+}
+
 
 func hashPassword(password string) string {
     h := sha256.New()
