@@ -5,6 +5,7 @@ import (
     "net/http"
     "quiz-backend/models"
     "quiz-backend/services"
+    "strconv"
     "fmt"
 )
 
@@ -74,29 +75,32 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserByID(w http.ResponseWriter, r *http.Request) {
-    var payload struct {
-        ID int `json:"id"`
-    }
-
-    // Decode the JSON request body to get the user ID
-    if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-        http.Error(w, fmt.Sprintf("Invalid request body: %v", err), http.StatusBadRequest)
+    // Extract user ID from query parameters
+    idStr := r.URL.Query().Get("id")
+    if idStr == "" {
+        http.Error(w, "User ID is required", http.StatusBadRequest)
         return
     }
 
-    id := payload.ID
+    // Convert ID to integer
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
 
     // Fetch the user from the service
     user, err := userService.GetUserByID(id)
     if err != nil {
         if err.Error() == "user not found" {
             http.Error(w, "User not found", http.StatusNotFound)
-        } else {
-            http.Error(w, fmt.Sprintf("Failed to get user: %v", err), http.StatusInternalServerError)
+            return
         }
+        http.Error(w, fmt.Sprintf("Failed to get user: %v", err), http.StatusInternalServerError)
         return
     }
 
     // Return the user as JSON
+    w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(user)
 }
