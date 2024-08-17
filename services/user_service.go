@@ -53,6 +53,40 @@ func (s *UserService) AuthenticateUser(email, password string) (*models.User, er
     return &user, nil
 }
 
+func (s *UserService) GetUsers() ([]models.User, error) {
+    rows, err := database.DB.Query("SELECT id, name, email, points FROM users")
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var users []models.User
+    for rows.Next() {
+        var u models.User
+        if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Points); err != nil {
+            return nil, err
+        }
+        users = append(users, u)
+    }
+
+    return users, nil
+}
+
+func (s *UserService) GetUserByID(id int) (*models.User, error) {
+    query := `SELECT id, name, email, points FROM users WHERE id = ?`
+    row := database.DB.QueryRow(query, id)
+
+    var user models.User
+    if err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Points); err != nil {
+        if err == sql.ErrNoRows {
+            return nil, errors.New("user not found")
+        }
+        return nil, err
+    }
+
+    return &user, nil
+}
+
 func hashPassword(password string) string {
     h := sha256.New()
     h.Write([]byte(password))

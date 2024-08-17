@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "net/http"
     "quiz-backend/models"
+    "strconv"
     "quiz-backend/services"
     "fmt"
 )
@@ -60,5 +61,45 @@ func Login(w http.ResponseWriter, r *http.Request) {
     }
 
     user.Password = ""
+    json.NewEncoder(w).Encode(user)
+}
+
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+    users, err := userService.GetUsers()
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(users)
+}
+
+func GetUserByID(w http.ResponseWriter, r *http.Request) {
+    // Extract the user ID from the URL parameters
+    idStr := r.URL.Query().Get("id")
+    if idStr == "" {
+        http.Error(w, "User ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Convert the ID to an integer
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    // Fetch the user from the service
+    user, err := userService.GetUserByID(id)
+    if err != nil {
+        if err.Error() == "user not found" {
+            http.Error(w, "User not found", http.StatusNotFound)
+        } else {
+            http.Error(w, fmt.Sprintf("Failed to get user: %v", err), http.StatusInternalServerError)
+        }
+        return
+    }
+
+    // Return the user as JSON
     json.NewEncoder(w).Encode(user)
 }

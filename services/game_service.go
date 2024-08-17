@@ -72,3 +72,4 @@ func (s *GameService) UpdateUserGame(game models.UserGame) error {
 
 	return nil
 }
+
